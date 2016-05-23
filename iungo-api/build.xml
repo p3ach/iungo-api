@@ -1,0 +1,94 @@
+<!--
+
+Dick Murray
+
+# To reduce the lib overhead ant -Dlib.dir={shared lib directory} {target}
+
+-->
+<project name="iungo-api" basedir=".">
+
+    <property name="src.dir"     value="src"/>
+
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir"     value="${build.dir}/jar"/>
+
+	<property name="lib.dir"     value="lib"/>
+
+	<property name="jvm.xms"  value="-Xms256m"/>
+	<property name="jvm.xmx"  value="-Xmx1024m"/>
+
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar"/>
+	</path>
+
+	<exec executable="git" outputproperty="git.branch.name" failifexecutionfails="false">
+	 <arg line="rev-parse --abbrev-ref HEAD"/>
+	</exec>
+
+	<exec executable="git" outputproperty="git.branch.id" failifexecutionfails="false">
+	 <arg line="rev-parse HEAD"/>
+	</exec>
+
+	<target name="apache-jena-3.1.0">
+		<mkdir dir="${lib.dir}"/>
+		<get src="http://www.mirrorservice.org/sites/ftp.apache.org/jena/binaries/apache-jena-3.1.0.tar.gz"
+		    dest="${lib.dir}/apache-jena-3.1.0.tar.gz" 
+		    verbose="true"
+		    usetimestamp="true"/>
+		<untar src="${lib.dir}/apache-jena-3.1.0.tar.gz" dest="${lib.dir}" compression="gzip"/>
+	</target>
+
+	<target name="jackson-fasterxml-2.7.4">
+		<mkdir dir="${lib.dir}/jackson-fasterxml-2.7.4"/>
+		<get src="http://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-core/2.7.4/jackson-core-2.7.4.jar"
+		    dest="${lib.dir}/jackson-fasterxml-2.7.4/jackson-core-2.7.4.jar" 
+		    verbose="true"
+		    usetimestamp="true"/>
+		<get src="http://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-databind/2.7.4/jackson-databind-2.7.4.jar"
+		    dest="${lib.dir}/jackson-fasterxml-2.7.4/jackson-databind-2.7.4.jar" 
+		    verbose="true"
+		    usetimestamp="true"/>
+		<get src="http://repo1.maven.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.7.4/jackson-annotations-2.7.4.jar"
+		    dest="${lib.dir}/jackson-fasterxml-2.7.4/jackson-annotations-2.7.4.jar" 
+		    verbose="true"
+		    usetimestamp="true"/>
+	</target>
+
+	<target name="junit-4.12">
+		<mkdir dir="${lib.dir}/junit-4.12"/>
+		<get src="http://search.maven.org/remotecontent?filepath=junit/junit/4.12/junit-4.12.jar" 
+		    dest="${lib.dir}/junit-4.12/junit-4.12.jar"
+		    verbose="true"
+		    usetimestamp="true"/>
+		<get src="http://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar" 
+		    dest="${lib.dir}/junit-4.12/hamcrest-core-1.3.jar"
+		    verbose="true"
+		    usetimestamp="true"/>
+	</target>
+
+	<target name="lib" depends="apache-jena-3.1.0, jackson-fasterxml-2.7.4, junit-4.12"/>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="compile" depends="lib">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" failonerror="false"/>
+    </target>
+
+	
+	<target name="jar" depends="compile">
+        <mkdir dir="${lib.dir}/${ant.project.name}"/>
+        <jar destfile="${lib.dir}/${ant.project.name}/${ant.project.name}.jar" basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Main-Class" value="${main-class}"/>
+            </manifest>
+        </jar>
+    	<echo message="${git.branch.name}-${git.branch.id}" file="${lib.dir}/${ant.project.name}/jar.txt"/>
+    </target>
+
+    <target name="clean-build" depends="clean,jar"/>
+
+</project>
